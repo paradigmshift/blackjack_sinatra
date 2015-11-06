@@ -88,7 +88,6 @@ end
 get '/get-bet' do
   @error = params[:error]
   @error = "You have $0 left, please get more cash" if session[:money] == 0
-  binding.pry
   erb :bet
 end
 
