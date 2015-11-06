@@ -1,0 +1,25 @@
+<h4> Results </h4>
+
+<% if params[:winner] == 'player' %>
+<h3> Congratulations, you won! </h3>
+<% elsif params[:winner] == 'dealer' %>
+<h3> Sorry, you lost </h3>
+<% end %>
+
+<h3> Dealer's cards are: </h3>
+<% session[:dealer_hand].each do |card| %>
+<img src=<%= img_url(card) %> />
+<% end %>
+<br>
+<p> For a total value of: <%= calculate_total(session[:dealer_hand]) %> </p>
+<br>
+
+<br>
+<h3> Your cards are: </h3>
+<% session[:player_hand].each do |card| %>
+<img src=<%= img_url(card) %> />
+<% end %>
+<br>
+<p> For a total value of: <%= calculate_total(session[:player_hand]) %> </p>
+<br>
+<a href='/game-start' class='btn'>Play again</a>
