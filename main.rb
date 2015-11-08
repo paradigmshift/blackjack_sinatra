@@ -11,7 +11,7 @@ helpers do
   def create_deck
     rank = %w(Spades Diamonds Hearts Clubs)
     suit = %w(2 3 4 5 6 7 8 9 10 Jack Queen King Ace)
-    deck = rank.product(suit).shuffle
+    rank.product(suit).shuffle
   end
 
   def calculate_total(hand)
@@ -37,7 +37,7 @@ helpers do
 
   def img_url(card)
     card_jpg = card[0].downcase + "_" + card[1].downcase + ".jpg"
-    "/images/cards/#{card_jpg}"
+    "<img src='/images/cards/#{card_jpg}' class='card_img'/>"
   end
 
   def won_bet
@@ -66,6 +66,10 @@ end
 
 post '/set-name' do
   session[:name] = params[:name]
+  if params[:name].empty?
+    @error = "Please enter your name"
+    halt erb(:get_name)
+  end
   redirect '/'
 end
 
@@ -78,11 +82,13 @@ get '/game-start' do
   session[:player_hand] = []
   session[:dealer_hand] = []
   session[:bet] = nil
+  session[:turn] = 'player'
+  session[:message] = nil 
   2.times do
     session[:player_hand] << session[:deck].pop
     session[:dealer_hand] << session[:deck].pop
   end
-  redirect '/game-loop?turn=player'
+  redirect '/game-loop'
 end
 
 get '/get-bet' do
@@ -109,9 +115,9 @@ get '/game-loop' do
   when bust?(session[:dealer_hand]) || bust?(session[:player_hand])
     redirect 'who-bust'
   end
-  redirect '/hit-or-stay' if params[:turn] == 'player'
+  redirect '/hit-or-stay' if session[:turn] == 'player'
   # Dealer's turn
-  while calculate_total(session[:dealer_hand]) < 17
+  if calculate_total(session[:dealer_hand]) < 17
     session[:dealer_hand] << session[:deck].pop
     redirect '/game-loop'
   end
@@ -123,12 +129,13 @@ get '/hit-or-stay' do
 end
 
 post '/stay' do
-  redirect '/game-loop?turn=dealer'
+  session[:turn] = 'dealer'
+  redirect '/game-loop'
 end
 
 post '/hit' do
   session[:player_hand] << session[:deck].pop
-  redirect '/game-loop?turn=player'
+  redirect '/game-loop'
 end
 
 #-------------------------------------------------------------------------------
@@ -137,23 +144,23 @@ end
 get '/who-bust' do
   if bust?(session[:player_hand])
     lost_bet
-    err = "You busted!"
+    session[:message] = "You busted!"
   else
     won_bet
-    err = "Dealer busted!"
+    session[:message] = "Dealer busted!"
   end
-  redirect "/results?error=#{err}"
+  redirect "/results"
 end
 
 get '/who-blackjack' do
   if blackjack?(session[:player_hand])
     won_bet
-    err = "Blackjack! You won!"
+    session[:message] = "Blackjack! You won!"
   else
     lost_bet
-    err = "Dealer hit Blackjack! You lose!"
+    session[:message] = "Dealer hit Blackjack! You lose!"
   end
-  redirect "/results?error=#{err}"
+  redirect "/results"
 end
 
 #-------------------------------------------------------------------------------

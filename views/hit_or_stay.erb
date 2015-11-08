@@ -1,21 +1,25 @@
+<div class='well'>
 <h4>Dealer's cards </h4>
-
-<img src="/images/cards/cover.jpg" />
-<img src=<%= img_url(session[:dealer_hand][0]) %> />
+  <img src="/images/cards/cover.jpg" class="card_img"/>
+  <%= img_url(session[:dealer_hand][0]) %>
+</div>
 <br>
 <br>
 
-<h4>Your Cards</h4>
+<div class='well'>
+  <h4>Your Cards</h4>
 
-<% session[:player_hand].each do |card| %>
-<img src=<%= img_url(card) %> />
-<% end %>
-<p> With a total value of <%= calculate_total(session[:player_hand]) %> </p>
+  <% session[:player_hand].each do |card| %>
 
-<form action='hit' method='post' name='hit'>
-  <input type='submit' value='Hit' class='btn'>
+  <%= img_url(card) %>
+  <% end %>
+  <p> With a total value of <%= calculate_total(session[:player_hand]) %> </p>
+
+</div>
+<form id='hit_form' action='hit' method='post' name='hit'>
+  <input type='submit' value='Hit' class='btn btn-success'>
 </form>
 
-<form action='stay' method='post' name='stay'>
-  <input type='submit' value='Stay' class='btn'>
+<form id='stay_form' action='stay' method='post' name='stay'>
+  <input type='submit' value='Stay' class='btn btn-warning'>
 </form>
