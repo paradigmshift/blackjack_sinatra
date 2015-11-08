@@ -179,5 +179,6 @@ end
 
 get '/results' do
   @error = params[:error]
+  @winner = params[:winner]
   erb :results
 end

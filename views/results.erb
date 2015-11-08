@@ -2,9 +2,9 @@
 
 <% if params[:winner] %>
 <div class='alert alert-info' >
-  <% if params[:winner] == 'player' %>
+  <% if @winner == 'player' %>
   <h3> Congratulations, you won! </h3>
-  <% elsif params[:winner] == 'dealer' %>
+  <% elsif @winner == 'dealer' %>
   <h3> Sorry, you lost </h3>
   <% end %>
 </div>
