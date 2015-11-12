@@ -14,6 +14,22 @@ helpers do
     rank.product(suit).shuffle
   end
 
+  def img_url(card)
+    card_jpg = card[0].downcase + "_" + card[1].downcase + ".jpg"
+    "<img src='/images/cards/#{card_jpg}' class='card_img'/>"
+  end
+
+#-------------------------------------------------------------------------------
+# Results
+#-------------------------------------------------------------------------------
+  def won_bet
+    session[:money] += session[:bet]
+  end
+
+  def lost_bet
+    session[:money] -= session[:bet]
+  end
+
   def calculate_total(hand)
     total = 0
     hand.map do |card|
@@ -27,6 +43,19 @@ helpers do
     total
   end
 
+  def compare_hands
+    if calculate_total(session[:player_hand]) > calculate_total(session[:dealer_hand])
+      won_bet
+      session[:winner] = 'player'
+    else
+      lost_bet
+      session[:winner] = 'dealer'
+    end
+  end
+
+#-------------------------------------------------------------------------------
+# Bust/Blackjack
+#-------------------------------------------------------------------------------
   def bust?(hand)
     calculate_total(hand) > 21
   end
@@ -35,17 +64,33 @@ helpers do
     calculate_total(hand) == 21
   end
 
-  def img_url(card)
-    card_jpg = card[0].downcase + "_" + card[1].downcase + ".jpg"
-    "<img src='/images/cards/#{card_jpg}' class='card_img'/>"
+  def who_bust
+    if bust?(session[:player_hand])
+      lost_bet
+      session[:message] = "You busted!"
+    else
+      won_bet
+      session[:message] = "Dealer busted!"
+    end
   end
 
-  def won_bet
-    session[:money] += session[:bet]
+  def who_blackjack
+    if blackjack?(session[:player_hand])
+      won_bet
+      session[:message] = "Blackjack! You won!"
+    else
+      lost_bet
+      session[:message] = "Dealer hit Blackjack! You lose!"
+    end
   end
 
-  def lost_bet
-    session[:money] -= session[:bet]
+  def check_conditions
+    case
+    when blackjack?(session[:dealer_hand]) || blackjack?(session[:player_hand])
+      who_blackjack
+    when bust?(session[:dealer_hand]) || bust?(session[:player_hand])
+      who_bust
+    end
   end
 
 end
@@ -83,12 +128,12 @@ get '/game-start' do
   session[:dealer_hand] = []
   session[:bet] = nil
   session[:turn] = 'player'
-  session[:message] = nil 
+  session[:message] = nil
   2.times do
     session[:player_hand] << session[:deck].pop
     session[:dealer_hand] << session[:deck].pop
   end
-  redirect '/game-loop'
+  redirect '/game'
 end
 
 get '/get-bet' do
@@ -100,85 +145,35 @@ end
 post '/set-bet' do
   if session[:money] >= params[:bet].to_i
     session[:bet] = params[:bet].to_i
-    redirect '/game-loop?turn=player'
+    redirect '/game'
   else
     error = 'Not enough cash'
     redirect "/get-bet?error=#{error}"
   end
 end
 
-get '/game-loop' do
+get '/game' do
   redirect '/get-bet' if not session[:bet]
-  case
-  when blackjack?(session[:dealer_hand]) || blackjack?(session[:player_hand])
-    redirect 'who-blackjack'
-  when bust?(session[:dealer_hand]) || bust?(session[:player_hand])
-    redirect 'who-bust'
-  end
-  redirect '/hit-or-stay' if session[:turn] == 'player'
-  # Dealer's turn
-  if calculate_total(session[:dealer_hand]) < 17
-    session[:dealer_hand] << session[:deck].pop
-    redirect '/game-loop'
-  end
-  redirect '/compare-hands'
-end
-
-get '/hit-or-stay' do
-  erb :hit_or_stay 
+  check_conditions
+  erb :game
 end
 
 post '/stay' do
-  session[:turn] = 'dealer'
-  redirect '/game-loop'
+  while calculate_total(session[:dealer_hand]) < 17
+    session[:dealer_hand] << session[:deck].pop
+  end
+  if check_conditions
+    erb :stay, layout: false
+  else compare_hands
+    erb :stay, layout: false
+  end
 end
 
 post '/hit' do
   session[:player_hand] << session[:deck].pop
-  redirect '/game-loop'
-end
-
-#-------------------------------------------------------------------------------
-# Bust/Blackjack
-#-------------------------------------------------------------------------------
-get '/who-bust' do
-  if bust?(session[:player_hand])
-    lost_bet
-    session[:message] = "You busted!"
+  if check_conditions
+    erb :stay, layout: false
   else
-    won_bet
-    session[:message] = "Dealer busted!"
+    erb :hit, layout: false
   end
-  redirect "/results"
-end
-
-get '/who-blackjack' do
-  if blackjack?(session[:player_hand])
-    won_bet
-    session[:message] = "Blackjack! You won!"
-  else
-    lost_bet
-    session[:message] = "Dealer hit Blackjack! You lose!"
-  end
-  redirect "/results"
-end
-
-#-------------------------------------------------------------------------------
-# Results
-#-------------------------------------------------------------------------------
-
-get '/compare-hands' do
-  if calculate_total(session[:player_hand]) > calculate_total(session[:dealer_hand])
-    won_bet
-    redirect 'results?winner=player'
-  else
-    lost_bet
-    redirect 'results?winner=dealer'
-  end
-end
-
-get '/results' do
-  @error = params[:error]
-  @winner = params[:winner]
-  erb :results
 end

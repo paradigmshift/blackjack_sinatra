@@ -1,12 +1,21 @@
 $(document).ready(function (){
-    $('#hit_form').click(function () {
+    $(document).on('click', '#hit_form input', function() {
         $.ajax({
             type: 'POST',
             url: '/hit'
         }).done(function(msg) {
-            $('#player-area').replaceWith(msg);
+            $('#game-area').replaceWith(msg);
         });
         return false;
-    })
-    ;
+    });
+
+    $(document).on('click', '#stay_form input', function() {
+        $.ajax({
+            type: 'POST',
+            url: '/stay'
+        }).done(function(msg) {
+            $('#game-area').replaceWith(msg);
+        });
+        return false;
+    });
 });

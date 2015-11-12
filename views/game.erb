@@ -1,0 +1,43 @@
+<% if session[:message] %>
+<div class='alert alert-block'>
+  <h3> <%= session[:message] %> </h3>
+</div>
+<% end %>
+
+<div id="game-area">
+  <div id="dealer-area"  class='well'>
+    <h4>Dealer's cards </h4>
+    <img src="/images/cards/cover.jpg" class="card_img"/>
+    <%= img_url(session[:dealer_hand][1]) %>
+  </div>
+  <br>
+  <br>
+
+  <div id="player-area">
+    <div class='well'>
+      <h4>Your Cards</h4>
+
+      <% session[:player_hand].each do |card| %>
+
+      <%= img_url(card) %>
+      <% end %>
+      <p> With a total value of <%= calculate_total(session[:player_hand]) %> </p>
+    </div>
+
+
+    <% if not session[:message] %>
+    <form id='hit_form' action='/hit' method='post' name='hit'>
+      <input type='submit' value='Hit' class='btn btn-success'>
+    </form>
+
+    <form id='stay_form' action='/stay' method='post' name='stay'>
+      <input type='submit' value='Stay' class='btn btn-warning'>
+    </form>
+    <% end %>
+
+    <% if session[:message] %>
+    <a href='/game-start' class='btn'> Play again? &#8635;</a>
+    <% end %>
+
+  </div>
+</div>
