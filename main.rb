@@ -125,7 +125,7 @@ get '/game-loop' do
 end
 
 get '/hit-or-stay' do
-  erb :hit_or_stay
+  erb :hit_or_stay 
 end
 
 post '/stay' do
